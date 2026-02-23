@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jimin Yu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=DM+Mono:wght@300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f5f0e8;
+      color: #1a1714;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      text-align: center;
+      opacity: 0;
+      animation: fadeUp 1s ease forwards 0.2s;
+    }
+
+    h1 {
+      font-size: clamp(2.8rem, 8vw, 5rem);
+      font-weight: 300;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.15em;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: #c8a882;
+    }
+
+    .divider {
+      width: 2rem;
+      height: 1px;
+      background: #c8a882;
+      margin: 1.8rem auto;
+    }
+
+    .links {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .links a {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 300;
+      letter-spacing: 0.18em;
+      color: #7a7168;
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.2s ease;
+    }
+
+    .links a:hover {
+      color: #1a1714;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Jimin <em>Yu</em></h1>
+    <div class="divider"></div>
+    <nav class="links">
+      <a href="mailto:jiminyu6577@gmail.com">jiminyu6577@gmail.com</a>
+      <a href="https://www.linkedin.com/in/jiminyu6577/" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://www.instagram.com/jm.yu/" target="_blank" rel="noopener">Instagram</a>
+    </nav>
+  </div>
+</body>
+</html>
