@@ -407,11 +407,11 @@
         id: 'trends',
         title: '트렌드 F/U',
         tabs: [
-          { id: 'payment', label: '결제', keywords: 'payment protocol OR stablecoin payments', lang: 'en' },
-          { id: 'dex', label: 'DEX', keywords: 'decentralized exchange OR Uniswap OR Jupiter DEX', lang: 'en' },
-          { id: 'prediction', label: '예측시장', keywords: 'prediction market OR Polymarket', lang: 'en' },
-          { id: 'ai', label: 'AI', keywords: 'AI crypto OR AI blockchain', lang: 'en' },
-          { id: 'fintech', label: '핀테크', keywords: 'fintech OR digital finance', lang: 'en' },
+          { id: 'payment', label: '결제', keywords: '스테이블코인 결제 가상자산 페이먼트', lang: 'ko' },
+          { id: 'dex', label: 'DEX', keywords: '탈중앙화 거래소 DEX 유니스왑', lang: 'ko' },
+          { id: 'prediction', label: '예측시장', keywords: '예측시장 폴리마켓 Polymarket', lang: 'ko' },
+          { id: 'ai', label: 'AI', keywords: 'AI 블록체인 인공지능 가상자산', lang: 'ko' },
+          { id: 'fintech', label: '핀테크', keywords: '핀테크 디지털금융 디지털자산', lang: 'ko' },
         ]
       }
     ];
@@ -470,11 +470,12 @@
       throw new Error('All proxies failed');
     }
 
-    // Google News RSS for Korean news (no API key needed)
+    // Google News RSS (no API key needed)
     // Uses regex parsing because DOMParser treats <link> as HTML void element
-    async function fetchGoogleNewsKR(keywords) {
+    async function fetchGoogleNews(keywords, lang = 'ko') {
       try {
-        const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(keywords)}&hl=ko&gl=KR&ceid=KR:ko`;
+        const params = lang === 'ko' ? 'hl=ko&gl=KR&ceid=KR:ko' : 'hl=en&gl=US&ceid=US:en';
+        const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(keywords)}&${params}`;
         const text = await fetchViaProxy(rssUrl);
 
         // Split by <item> to extract each news entry
@@ -568,26 +569,24 @@
 
       let articles = [];
 
-      if (tab.lang === 'ko') {
-        // Korean news: use Google News RSS (no API key needed)
-        articles = await fetchGoogleNewsKR(tab.keywords);
-        // Supplement with NewsAPI if available and results are few
-        if (articles.length < 3 && apiKey) {
-          const newsapi = await fetchNewsAPI(tab.keywords, 'ko');
-          const urls = new Set(articles.map(a => a.url));
-          for (const a of newsapi) {
-            if (!urls.has(a.url)) articles.push(a);
-          }
+      // Google News RSS as primary source (no API key needed)
+      articles = await fetchGoogleNews(tab.keywords, tab.lang);
+
+      // Supplement with NewsAPI if available and results are few
+      if (articles.length < 3 && apiKey) {
+        const newsapi = await fetchNewsAPI(tab.keywords, tab.lang);
+        const urls = new Set(articles.map(a => a.url));
+        for (const a of newsapi) {
+          if (!urls.has(a.url)) articles.push(a);
         }
-      } else {
-        // English news: use NewsAPI + CryptoCompare fallback
-        articles = await fetchNewsAPI(tab.keywords, tab.lang);
-        if (articles.length < 3 && categoryId === 'global') {
-          const cc = await fetchCryptoCompare();
-          const urls = new Set(articles.map(a => a.url));
-          for (const a of cc) {
-            if (!urls.has(a.url)) articles.push(a);
-          }
+      }
+
+      // CryptoCompare fallback for global section
+      if (articles.length < 3 && categoryId === 'global') {
+        const cc = await fetchCryptoCompare();
+        const urls = new Set(articles.map(a => a.url));
+        for (const a of cc) {
+          if (!urls.has(a.url)) articles.push(a);
         }
       }
 
@@ -618,13 +617,7 @@
       return `<div class="state-box"><div class="spinner"></div><p>Loading news...</p></div>`;
     }
 
-    function renderEmpty(categoryId) {
-      const cat = CATEGORIES.find(c => c.id === categoryId);
-      const tabId = activeTab[categoryId] || cat.tabs[0].id;
-      const tab = cat.tabs.find(t => t.id === tabId);
-      if (!apiKey && tab.lang !== 'ko') {
-        return `<div class="state-box"><div class="icon">🔑</div><p>글로벌 뉴스를 보려면 API Key를 설정해주세요.</p></div>`;
-      }
+    function renderEmpty() {
       return `<div class="state-box"><div class="icon">📭</div><p>표시할 뉴스가 없습니다.</p></div>`;
     }
 
