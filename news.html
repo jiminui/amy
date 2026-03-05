@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Crypto & Fintech Briefing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #ffffff;
+      color: #1a1714;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header */
+    .header {
+      border-bottom: 1px solid #e8e4de;
+      padding: 1.5rem 2rem;
+      position: sticky;
+      top: 0;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .header-left h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: #1a1714;
+    }
+
+    .header-left .date {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 300;
+      color: #7a7168;
+      letter-spacing: 0.04em;
+      margin-top: 0.15rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.45rem 0.9rem;
+      border: 1px solid #d4cfc7;
+      border-radius: 4px;
+      background: #fff;
+      color: #7a7168;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      border-color: #1a1714;
+      color: #1a1714;
+    }
+
+    .btn.active {
+      background: #1a1714;
+      color: #fff;
+      border-color: #1a1714;
+    }
+
+    /* Main */
+    .main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* API Key Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.visible {
+      display: flex;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 8px;
+      padding: 2rem;
+      width: 90%;
+      max-width: 460px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    }
+
+    .modal h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal p {
+      font-size: 0.82rem;
+      color: #7a7168;
+      margin-bottom: 1.25rem;
+      line-height: 1.5;
+    }
+
+    .modal p a {
+      color: #1a1714;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .modal input {
+      width: 100%;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid #d4cfc7;
+      border-radius: 4px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .modal input:focus {
+      border-color: #1a1714;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      justify-content: flex-end;
+    }
+
+    /* Section */
+    .section {
+      margin-bottom: 2.5rem;
+    }
+
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #7a7168;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .section-title::before,
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e8e4de;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0.35rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 400;
+      padding: 0.4rem 0.85rem;
+      border: 1px solid #e8e4de;
+      border-radius: 20px;
+      background: #fff;
+      color: #7a7168;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .tab:hover {
+      border-color: #b0a899;
+      color: #1a1714;
+    }
+
+    .tab.active {
+      background: #1a1714;
+      color: #fff;
+      border-color: #1a1714;
+    }
+
+    /* News Grid */
+    .news-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1rem;
+    }
+
+    .news-card {
+      border: 1px solid #e8e4de;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      background: #fff;
+    }
+
+    .news-card:hover {
+      border-color: #c8a882;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+
+    .news-card a {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .news-card-img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      background: #f5f0e8;
+      display: block;
+    }
+
+    .news-card-body {
+      padding: 1rem 1.1rem;
+    }
+
+    .news-card-source {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #b0a899;
+      margin-bottom: 0.4rem;
+    }
+
+    .news-card-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      line-height: 1.4;
+      color: #1a1714;
+      margin-bottom: 0.4rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .news-card-desc {
+      font-size: 0.8rem;
+      color: #7a7168;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 0.6rem;
+    }
+
+    .news-card-time {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: #b0a899;
+    }
+
+    /* Loading & Empty States */
+    .state-box {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #b0a899;
+    }
+
+    .state-box .icon {
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .state-box p {
+      font-size: 0.82rem;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2px solid #e8e4de;
+      border-top-color: #1a1714;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 0.75rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .header { padding: 1rem 1.25rem; }
+      .main { padding: 1.25rem; }
+      .header-inner { flex-direction: column; align-items: flex-start; }
+      .news-grid { grid-template-columns: 1fr; }
+      .news-card-img { height: 140px; }
+    }
+
+    /* Fade-in animation */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(8px);
+      animation: fadeUp 0.4s ease forwards;
+    }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-left">
+        <h1>Daily Crypto & Fintech Briefing</h1>
+        <div class="date" id="headerDate"></div>
+      </div>
+      <div class="header-actions">
+        <button class="btn" id="btnApiKey">API Key</button>
+        <button class="btn" id="btnRefresh">Refresh</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- API Key Modal -->
+  <div class="modal-overlay" id="apiModal">
+    <div class="modal">
+      <h2>NewsAPI Key</h2>
+      <p>
+        Enter your NewsAPI.org API key to fetch news.<br />
+        Get a free key at <a href="https://newsapi.org/register" target="_blank" rel="noopener">newsapi.org</a>.<br />
+        <span style="font-size:0.75rem;">Note: Free plan only works on localhost.</span>
+      </p>
+      <input type="text" id="apiKeyInput" placeholder="e.g. abc123def456..." />
+      <div class="modal-actions">
+        <button class="btn" id="btnModalCancel">Cancel</button>
+        <button class="btn active" id="btnModalSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main" id="app"></div>
+
+  <script>
+    // ── Configuration ──
+    const CATEGORIES = [
+      {
+        id: 'domestic',
+        title: '국내 가상자산 시장',
+        tabs: [
+          { id: 'regulation', label: '규제', keywords: '가상자산 규제', lang: 'ko' },
+          { id: 'market', label: '시장', keywords: '암호화폐 시장', lang: 'ko' },
+          { id: 'competitors', label: '경쟁사', keywords: '빗썸 코빗 고팍스 거래소', lang: 'ko' },
+          { id: 'dunamu', label: '두나무', keywords: '두나무 업비트', lang: 'ko' },
+        ]
+      },
+      {
+        id: 'global',
+        title: '글로벌 가상자산 시장',
+        tabs: [
+          { id: 'coinbase', label: 'Coinbase', keywords: 'Coinbase crypto', lang: 'en' },
+          { id: 'binance', label: 'Binance', keywords: 'Binance crypto exchange', lang: 'en' },
+          { id: 'okx', label: 'OKX', keywords: 'OKX crypto exchange', lang: 'en' },
+        ]
+      },
+      {
+        id: 'trends',
+        title: '트렌드 F/U',
+        tabs: [
+          { id: 'payment', label: '결제', keywords: 'payment protocol OR stablecoin payments', lang: 'en' },
+          { id: 'dex', label: 'DEX', keywords: 'decentralized exchange OR Uniswap OR Jupiter DEX', lang: 'en' },
+          { id: 'prediction', label: '예측시장', keywords: 'prediction market OR Polymarket', lang: 'en' },
+          { id: 'ai', label: 'AI', keywords: 'AI crypto OR AI blockchain', lang: 'en' },
+          { id: 'fintech', label: '핀테크', keywords: 'fintech OR digital finance', lang: 'en' },
+        ]
+      }
+    ];
+
+    // ── State ──
+    let apiKey = localStorage.getItem('newsapi_key') || '';
+    const activeTab = {};   // categoryId -> tabId
+    const cache = {};       // "categoryId:tabId" -> { articles, ts }
+    const CACHE_TTL = 10 * 60 * 1000; // 10 min
+
+    // ── Date Display ──
+    function formatKoreanDate() {
+      const now = new Date();
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      const y = now.getFullYear();
+      const m = now.getMonth() + 1;
+      const d = now.getDate();
+      const day = days[now.getDay()];
+      return `${y}년 ${m}월 ${d}일 (${day})`;
+    }
+    document.getElementById('headerDate').textContent = formatKoreanDate();
+
+    // ── Relative Time ──
+    function relativeTime(dateStr) {
+      const diff = Date.now() - new Date(dateStr).getTime();
+      const mins = Math.floor(diff / 60000);
+      if (mins < 1) return '방금 전';
+      if (mins < 60) return `${mins}분 전`;
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return `${hrs}시간 전`;
+      const days = Math.floor(hrs / 24);
+      return `${days}일 전`;
+    }
+
+    // ── API Calls ──
+
+    // Google News RSS for Korean news (no API key needed)
+    // Uses regex parsing because DOMParser treats <link> as HTML void element
+    async function fetchGoogleNewsKR(keywords) {
+      try {
+        const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(keywords)}&hl=ko&gl=KR&ceid=KR:ko`;
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`;
+        const res = await fetch(proxyUrl);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+
+        // Split by <item> to extract each news entry
+        const itemBlocks = text.split('<item>').slice(1); // skip preamble
+        const articles = [];
+        for (let i = 0; i < Math.min(itemBlocks.length, 12); i++) {
+          const block = itemBlocks[i];
+          const getTag = (tag) => {
+            const m = block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`));
+            return m ? m[1].trim() : '';
+          };
+          const rawTitle = getTag('title');
+          const link = getTag('link');
+          const pubDate = getTag('pubDate');
+          const rawDesc = getTag('description');
+          const sourceTag = getTag('source');
+
+          // Google News title format: "Title - Source"
+          const titleParts = rawTitle.split(' - ');
+          const sourceName = titleParts.length > 1 ? titleParts.pop().trim() : '';
+          const title = titleParts.join(' - ').trim();
+
+          // Clean description HTML entities and tags
+          const desc = rawDesc
+            .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+            .replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+
+          if (!title) continue;
+          articles.push({
+            source: { name: sourceTag || sourceName || 'News' },
+            title,
+            description: desc.slice(0, 250),
+            url: link,
+            urlToImage: '',
+            publishedAt: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
+          });
+        }
+        return articles;
+      } catch (e) {
+        console.warn('Google News RSS fetch failed:', e);
+        return [];
+      }
+    }
+
+    async function fetchNewsAPI(keywords, lang) {
+      if (!apiKey) return [];
+      const params = new URLSearchParams({
+        q: keywords,
+        sortBy: 'publishedAt',
+        pageSize: '10',
+        apiKey: apiKey,
+      });
+      if (lang) params.set('language', lang);
+      try {
+        const res = await fetch(`https://newsapi.org/v2/everything?${params}`);
+        const data = await res.json();
+        if (data.status === 'ok') return data.articles || [];
+        console.warn('NewsAPI error:', data.message);
+        return [];
+      } catch (e) {
+        console.warn('NewsAPI fetch failed:', e);
+        return [];
+      }
+    }
+
+    async function fetchCryptoCompare() {
+      try {
+        const res = await fetch('https://min-api.cryptocompare.com/data/v2/news/?lang=EN&sortOrder=popular');
+        const data = await res.json();
+        if (data.Data) {
+          return data.Data.slice(0, 10).map(item => ({
+            source: { name: item.source },
+            title: item.title,
+            description: item.body ? item.body.slice(0, 200) + '...' : '',
+            url: item.url,
+            urlToImage: item.imageurl,
+            publishedAt: new Date(item.published_on * 1000).toISOString(),
+          }));
+        }
+        return [];
+      } catch (e) {
+        console.warn('CryptoCompare fetch failed:', e);
+        return [];
+      }
+    }
+
+    async function fetchArticles(categoryId, tab) {
+      const key = `${categoryId}:${tab.id}`;
+      const cached = cache[key];
+      if (cached && (Date.now() - cached.ts) < CACHE_TTL) return cached.articles;
+
+      let articles = [];
+
+      if (tab.lang === 'ko') {
+        // Korean news: use Google News RSS (no API key needed)
+        articles = await fetchGoogleNewsKR(tab.keywords);
+        // Supplement with NewsAPI if available and results are few
+        if (articles.length < 3 && apiKey) {
+          const newsapi = await fetchNewsAPI(tab.keywords, 'ko');
+          const urls = new Set(articles.map(a => a.url));
+          for (const a of newsapi) {
+            if (!urls.has(a.url)) articles.push(a);
+          }
+        }
+      } else {
+        // English news: use NewsAPI + CryptoCompare fallback
+        articles = await fetchNewsAPI(tab.keywords, tab.lang);
+        if (articles.length < 3 && categoryId === 'global') {
+          const cc = await fetchCryptoCompare();
+          const urls = new Set(articles.map(a => a.url));
+          for (const a of cc) {
+            if (!urls.has(a.url)) articles.push(a);
+          }
+        }
+      }
+
+      cache[key] = { articles, ts: Date.now() };
+      return articles;
+    }
+
+    // ── Rendering ──
+    function renderCard(article, i) {
+      const img = article.urlToImage
+        ? `<img class="news-card-img" src="${escapeAttr(article.urlToImage)}" alt="" onerror="this.style.display='none'" />`
+        : '';
+      return `
+        <div class="news-card fade-in" style="animation-delay:${i * 0.05}s">
+          <a href="${escapeAttr(article.url)}" target="_blank" rel="noopener">
+            ${img}
+            <div class="news-card-body">
+              <div class="news-card-source">${escapeHtml(article.source?.name || 'Unknown')}</div>
+              <div class="news-card-title">${escapeHtml(article.title || '')}</div>
+              <div class="news-card-desc">${escapeHtml(article.description || '')}</div>
+              <div class="news-card-time">${relativeTime(article.publishedAt)}</div>
+            </div>
+          </a>
+        </div>`;
+    }
+
+    function renderLoading() {
+      return `<div class="state-box"><div class="spinner"></div><p>Loading news...</p></div>`;
+    }
+
+    function renderEmpty(categoryId) {
+      const cat = CATEGORIES.find(c => c.id === categoryId);
+      const tabId = activeTab[categoryId] || cat.tabs[0].id;
+      const tab = cat.tabs.find(t => t.id === tabId);
+      if (!apiKey && tab.lang !== 'ko') {
+        return `<div class="state-box"><div class="icon">🔑</div><p>글로벌 뉴스를 보려면 API Key를 설정해주세요.</p></div>`;
+      }
+      return `<div class="state-box"><div class="icon">📭</div><p>표시할 뉴스가 없습니다.</p></div>`;
+    }
+
+    function renderSection(cat) {
+      const currentTabId = activeTab[cat.id] || cat.tabs[0].id;
+      const tabsHtml = cat.tabs.map(t =>
+        `<button class="tab ${t.id === currentTabId ? 'active' : ''}" data-category="${cat.id}" data-tab="${t.id}">${escapeHtml(t.label)}</button>`
+      ).join('');
+
+      return `
+        <div class="section" id="section-${cat.id}">
+          <div class="section-title">${escapeHtml(cat.title)}</div>
+          <div class="tabs">${tabsHtml}</div>
+          <div class="news-grid" id="grid-${cat.id}">${renderLoading()}</div>
+        </div>`;
+    }
+
+    function renderApp() {
+      const app = document.getElementById('app');
+      app.innerHTML = CATEGORIES.map(renderSection).join('');
+      // Load first tab for each category
+      CATEGORIES.forEach(cat => {
+        const tabId = activeTab[cat.id] || cat.tabs[0].id;
+        activeTab[cat.id] = tabId;
+        loadTab(cat.id, tabId);
+      });
+    }
+
+    async function loadTab(categoryId, tabId) {
+      const grid = document.getElementById(`grid-${categoryId}`);
+      if (!grid) return;
+      grid.innerHTML = renderLoading();
+
+      const cat = CATEGORIES.find(c => c.id === categoryId);
+      const tab = cat.tabs.find(t => t.id === tabId);
+      const articles = await fetchArticles(categoryId, tab);
+
+      if (articles.length === 0) {
+        grid.innerHTML = renderEmpty(categoryId);
+      } else {
+        grid.innerHTML = articles.map((a, i) => renderCard(a, i)).join('');
+      }
+    }
+
+    // ── Escaping ──
+    function escapeHtml(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function escapeAttr(str) {
+      return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // ── Event Handlers ──
+
+    // Tab clicks (event delegation)
+    document.getElementById('app').addEventListener('click', (e) => {
+      const tab = e.target.closest('.tab');
+      if (!tab) return;
+      const catId = tab.dataset.category;
+      const tabId = tab.dataset.tab;
+      if (activeTab[catId] === tabId) return;
+
+      // Update active tab UI
+      const section = document.getElementById(`section-${catId}`);
+      section.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      activeTab[catId] = tabId;
+      loadTab(catId, tabId);
+    });
+
+    // API Key modal
+    const modal = document.getElementById('apiModal');
+    const apiInput = document.getElementById('apiKeyInput');
+
+    document.getElementById('btnApiKey').addEventListener('click', () => {
+      apiInput.value = apiKey;
+      modal.classList.add('visible');
+      setTimeout(() => apiInput.focus(), 100);
+    });
+
+    document.getElementById('btnModalCancel').addEventListener('click', () => {
+      modal.classList.remove('visible');
+    });
+
+    document.getElementById('btnModalSave').addEventListener('click', () => {
+      apiKey = apiInput.value.trim();
+      if (apiKey) {
+        localStorage.setItem('newsapi_key', apiKey);
+      } else {
+        localStorage.removeItem('newsapi_key');
+      }
+      modal.classList.remove('visible');
+      // Clear cache and reload
+      Object.keys(cache).forEach(k => delete cache[k]);
+      renderApp();
+    });
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.classList.remove('visible');
+    });
+
+    // Enter key in modal
+    apiInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('btnModalSave').click();
+    });
+
+    // Refresh
+    document.getElementById('btnRefresh').addEventListener('click', () => {
+      Object.keys(cache).forEach(k => delete cache[k]);
+      renderApp();
+    });
+
+    // ── Init ──
+    renderApp();
+
+    // No auto-modal: Korean news works without API key via Google News RSS
+  </script>
+</body>
+</html>
