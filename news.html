@@ -448,15 +448,34 @@
 
     // ── API Calls ──
 
+    // CORS proxy with fallback
+    const WORKER_PROXY_URL = 'https://cors-proxy.jiminyu6577.workers.dev';
+
+    async function fetchViaProxy(url) {
+      const proxies = [
+        // 1순위: 자체 Cloudflare Worker
+        (u) => `${WORKER_PROXY_URL}/?url=${encodeURIComponent(u)}`,
+        // fallback: 공개 프록시
+        (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+        (u) => `https://corsproxy.org/?url=${encodeURIComponent(u)}`,
+      ];
+      for (const makeProxy of proxies) {
+        try {
+          const res = await fetch(makeProxy(url), { signal: AbortSignal.timeout(8000) });
+          if (!res.ok) continue;
+          const text = await res.text();
+          if (text.includes('<item>')) return text;
+        } catch {}
+      }
+      throw new Error('All proxies failed');
+    }
+
     // Google News RSS for Korean news (no API key needed)
     // Uses regex parsing because DOMParser treats <link> as HTML void element
     async function fetchGoogleNewsKR(keywords) {
       try {
         const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(keywords)}&hl=ko&gl=KR&ceid=KR:ko`;
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`;
-        const res = await fetch(proxyUrl);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const text = await res.text();
+        const text = await fetchViaProxy(rssUrl);
 
         // Split by <item> to extract each news entry
         const itemBlocks = text.split('<item>').slice(1); // skip preamble
