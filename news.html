@@ -53,6 +53,24 @@
       color: #6b7a99;
       letter-spacing: 0.04em;
       margin-top: 0.15rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-refresh {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: #8a9ab5;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      transition: color 0.15s;
+    }
+
+    .btn-refresh:hover {
+      color: #006BDC;
     }
 
     .header-actions {
@@ -352,11 +370,10 @@
     <div class="header-inner">
       <div class="header-left">
         <h1>📰 경영혁신실 뉴스 클리핑</h1>
-        <div class="date" id="headerDate"></div>
-      </div>
-      <div class="header-actions">
-        <button class="btn" id="btnApiKey">API Key</button>
-        <button class="btn" id="btnRefresh">Refresh</button>
+        <div class="date">
+          <span id="headerDate"></span>
+          <button class="btn-refresh" id="btnRefresh">🔄 refresh</button>
+        </div>
       </div>
     </div>
   </header>
@@ -423,16 +440,18 @@
     const CACHE_TTL = 10 * 60 * 1000; // 10 min
 
     // ── Date Display ──
-    function formatKoreanDate() {
+    function formatKoreanDateTime() {
       const now = new Date();
       const days = ['일', '월', '화', '수', '목', '금', '토'];
       const y = now.getFullYear();
       const m = now.getMonth() + 1;
       const d = now.getDate();
       const day = days[now.getDay()];
-      return `${y}년 ${m}월 ${d}일 (${day})`;
+      const h = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      return `${y}년 ${m}월 ${d}일 (${day}) ${h}:${min}`;
     }
-    document.getElementById('headerDate').textContent = formatKoreanDate();
+    document.getElementById('headerDate').textContent = formatKoreanDateTime();
 
     // ── Relative Time ──
     function relativeTime(dateStr) {
@@ -731,6 +750,7 @@
     // Refresh
     document.getElementById('btnRefresh').addEventListener('click', () => {
       Object.keys(cache).forEach(k => delete cache[k]);
+      document.getElementById('headerDate').textContent = formatKoreanDateTime();
       renderApp();
     });
 
