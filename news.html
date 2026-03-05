@@ -378,23 +378,6 @@
     </div>
   </header>
 
-  <!-- API Key Modal -->
-  <div class="modal-overlay" id="apiModal">
-    <div class="modal">
-      <h2>NewsAPI Key</h2>
-      <p>
-        Enter your NewsAPI.org API key to fetch news.<br />
-        Get a free key at <a href="https://newsapi.org/register" target="_blank" rel="noopener">newsapi.org</a>.<br />
-        <span style="font-size:0.75rem;">Note: Free plan only works on localhost.</span>
-      </p>
-      <input type="text" id="apiKeyInput" placeholder="e.g. abc123def456..." />
-      <div class="modal-actions">
-        <button class="btn" id="btnModalCancel">Cancel</button>
-        <button class="btn active" id="btnModalSave">Save</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Main Content -->
   <div class="main" id="app"></div>
 
@@ -709,42 +692,6 @@
 
       activeTab[catId] = tabId;
       loadTab(catId, tabId);
-    });
-
-    // API Key modal
-    const modal = document.getElementById('apiModal');
-    const apiInput = document.getElementById('apiKeyInput');
-
-    document.getElementById('btnApiKey').addEventListener('click', () => {
-      apiInput.value = apiKey;
-      modal.classList.add('visible');
-      setTimeout(() => apiInput.focus(), 100);
-    });
-
-    document.getElementById('btnModalCancel').addEventListener('click', () => {
-      modal.classList.remove('visible');
-    });
-
-    document.getElementById('btnModalSave').addEventListener('click', () => {
-      apiKey = apiInput.value.trim();
-      if (apiKey) {
-        localStorage.setItem('newsapi_key', apiKey);
-      } else {
-        localStorage.removeItem('newsapi_key');
-      }
-      modal.classList.remove('visible');
-      // Clear cache and reload
-      Object.keys(cache).forEach(k => delete cache[k]);
-      renderApp();
-    });
-
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) modal.classList.remove('visible');
-    });
-
-    // Enter key in modal
-    apiInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') document.getElementById('btnModalSave').click();
     });
 
     // Refresh
