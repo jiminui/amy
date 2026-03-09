@@ -73,6 +73,129 @@
       color: #006BDC;
     }
 
+    /* Search */
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      max-width: 360px;
+      min-width: 180px;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem;
+      padding: 0.5rem 0.75rem 0.5rem 2.1rem;
+      border: 1px solid #e0e5ed;
+      border-radius: 6px;
+      background: #f5f7fa;
+      outline: none;
+      transition: all 0.15s;
+      color: #1a2740;
+    }
+
+    .search-wrap input:focus {
+      border-color: #006BDC;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(0,107,220,0.08);
+    }
+
+    .search-wrap input::placeholder {
+      color: #8a9ab5;
+    }
+
+    .search-wrap .search-icon {
+      position: absolute;
+      left: 0.65rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.85rem;
+      color: #8a9ab5;
+      pointer-events: none;
+    }
+
+    .search-wrap .search-clear {
+      position: absolute;
+      right: 0.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.75rem;
+      color: #8a9ab5;
+      cursor: pointer;
+      background: none;
+      border: none;
+      display: none;
+      padding: 0.2rem;
+    }
+
+    .search-wrap .search-clear:hover {
+      color: #1a2740;
+    }
+
+    /* Search Results */
+    .search-results {
+      display: none;
+    }
+
+    .search-results.visible {
+      display: block;
+    }
+
+    .search-results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .search-results-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1a2740;
+    }
+
+    .search-results-header .search-query {
+      color: #006BDC;
+    }
+
+    .search-results-header .btn-close-search {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      color: #8a9ab5;
+      background: none;
+      border: 1px solid #e0e5ed;
+      border-radius: 4px;
+      padding: 0.35rem 0.7rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .search-results-header .btn-close-search:hover {
+      border-color: #006BDC;
+      color: #004595;
+    }
+
+    .search-subsection {
+      margin-bottom: 2rem;
+    }
+
+    .search-subsection-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6b7a99;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid #e0e5ed;
+    }
+
+    .search-no-result {
+      font-size: 0.82rem;
+      color: #8a9ab5;
+      padding: 1rem 0;
+    }
+
     .header-actions {
       display: flex;
       gap: 0.5rem;
@@ -347,6 +470,7 @@
       .header { padding: 1rem 1.25rem; }
       .main { padding: 1.25rem; }
       .header-inner { flex-direction: column; align-items: flex-start; }
+      .search-wrap { max-width: 100%; }
       .news-grid { grid-template-columns: 1fr; }
       .news-card-img { height: 140px; }
     }
@@ -374,6 +498,11 @@
           <span id="headerDate"></span>
           <button class="btn-refresh" id="btnRefresh">🔄 refresh</button>
         </div>
+      </div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="뉴스 검색..." />
+        <button class="search-clear" id="searchClear">✕</button>
       </div>
     </div>
   </header>
@@ -644,6 +773,111 @@
     function escapeAttr(str) {
       return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
+
+    // ── Search ──
+    let isSearchMode = false;
+
+    function getAllCachedArticles() {
+      const all = [];
+      const seen = new Set();
+      for (const key of Object.keys(cache)) {
+        for (const a of (cache[key].articles || [])) {
+          if (!seen.has(a.url)) {
+            seen.add(a.url);
+            all.push(a);
+          }
+        }
+      }
+      return all;
+    }
+
+    function searchCachedArticles(query) {
+      const q = query.toLowerCase();
+      const terms = q.split(/\s+/).filter(Boolean);
+      return getAllCachedArticles().filter(a => {
+        const text = `${a.title || ''} ${a.description || ''} ${a.source?.name || ''}`.toLowerCase();
+        return terms.every(t => text.includes(t));
+      });
+    }
+
+    async function performSearch(query) {
+      if (!query.trim()) return;
+      isSearchMode = true;
+      const app = document.getElementById('app');
+
+      // Show search results UI
+      app.innerHTML = `
+        <div class="search-results visible">
+          <div class="search-results-header">
+            <h2>"<span class="search-query">${escapeHtml(query)}</span>" 검색 결과</h2>
+            <button class="btn-close-search" id="btnCloseSearch">✕ 닫기</button>
+          </div>
+          <div class="search-subsection">
+            <div class="search-subsection-title">📋 클리핑 뉴스에서 찾은 결과</div>
+            <div class="news-grid" id="grid-cached">${renderLoading()}</div>
+          </div>
+          <div class="search-subsection">
+            <div class="search-subsection-title">🌐 웹 검색 결과</div>
+            <div class="news-grid" id="grid-web">${renderLoading()}</div>
+          </div>
+        </div>`;
+
+      // Bind close button
+      document.getElementById('btnCloseSearch').addEventListener('click', closeSearch);
+
+      // 1) Cached results (instant)
+      const cachedResults = searchCachedArticles(query);
+      const gridCached = document.getElementById('grid-cached');
+      if (cachedResults.length === 0) {
+        gridCached.innerHTML = `<div class="search-no-result">클리핑된 뉴스 중 일치하는 결과가 없습니다.</div>`;
+      } else {
+        gridCached.innerHTML = cachedResults.map((a, i) => renderCard(a, i)).join('');
+      }
+
+      // 2) Web search via Google News RSS
+      const gridWeb = document.getElementById('grid-web');
+      try {
+        const webArticles = await fetchGoogleNews(query, 'ko');
+        if (webArticles.length === 0) {
+          gridWeb.innerHTML = `<div class="search-no-result">웹 검색 결과가 없습니다.</div>`;
+        } else {
+          gridWeb.innerHTML = webArticles.map((a, i) => renderCard(a, i)).join('');
+        }
+      } catch {
+        gridWeb.innerHTML = `<div class="search-no-result">웹 검색 중 오류가 발생했습니다.</div>`;
+      }
+    }
+
+    function closeSearch() {
+      isSearchMode = false;
+      document.getElementById('searchInput').value = '';
+      document.getElementById('searchClear').style.display = 'none';
+      renderApp();
+    }
+
+    // Search input events
+    const searchInput = document.getElementById('searchInput');
+    const searchClearBtn = document.getElementById('searchClear');
+    let searchTimer = null;
+
+    searchInput.addEventListener('input', () => {
+      searchClearBtn.style.display = searchInput.value ? 'block' : 'none';
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && searchInput.value.trim()) {
+        performSearch(searchInput.value.trim());
+      }
+      if (e.key === 'Escape') {
+        if (isSearchMode) closeSearch();
+        else { searchInput.value = ''; searchClearBtn.style.display = 'none'; searchInput.blur(); }
+      }
+    });
+
+    searchClearBtn.addEventListener('click', () => {
+      if (isSearchMode) closeSearch();
+      else { searchInput.value = ''; searchClearBtn.style.display = 'none'; searchInput.focus(); }
+    });
 
     // ── Event Handlers ──
 
