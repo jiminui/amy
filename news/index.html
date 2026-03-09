@@ -543,27 +543,6 @@
       }
     }
 
-    async function fetchCryptoCompare() {
-      try {
-        const res = await fetch('https://min-api.cryptocompare.com/data/v2/news/?lang=EN&sortOrder=popular');
-        const data = await res.json();
-        if (data.Data) {
-          return data.Data.slice(0, 10).map(item => ({
-            source: { name: item.source },
-            title: item.title,
-            description: item.body ? item.body.slice(0, 200) + '...' : '',
-            url: item.url,
-            urlToImage: item.imageurl,
-            publishedAt: new Date(item.published_on * 1000).toISOString(),
-          }));
-        }
-        return [];
-      } catch (e) {
-        console.warn('CryptoCompare fetch failed:', e);
-        return [];
-      }
-    }
-
     async function fetchArticles(categoryId, tab) {
       const key = `${categoryId}:${tab.id}`;
       const cached = cache[key];
@@ -579,15 +558,6 @@
         const newsapi = await fetchNewsAPI(tab.keywords, tab.lang);
         const urls = new Set(articles.map(a => a.url));
         for (const a of newsapi) {
-          if (!urls.has(a.url)) articles.push(a);
-        }
-      }
-
-      // CryptoCompare fallback for global section
-      if (articles.length < 3 && categoryId === 'global') {
-        const cc = await fetchCryptoCompare();
-        const urls = new Set(articles.map(a => a.url));
-        for (const a of cc) {
           if (!urls.has(a.url)) articles.push(a);
         }
       }
