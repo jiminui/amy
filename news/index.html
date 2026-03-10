@@ -779,6 +779,30 @@ async function loadTab(catId, tabId) {
   grid.innerHTML = html || renderEmpty();
 }
 
+// ── ISO Week → 한국어 주차 변환 ───────────────────────────────────────────────
+function isoWeekToKorean(year, weekStr) {
+  const week = parseInt(String(weekStr).replace('W', ''));
+  // ISO week의 월요일 계산
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const dow = jan4.getUTCDay() || 7;
+  const week1Mon = new Date(jan4);
+  week1Mon.setUTCDate(jan4.getUTCDate() - dow + 1);
+  const weekMon = new Date(week1Mon);
+  weekMon.setUTCDate(week1Mon.getUTCDate() + (week - 1) * 7);
+  // 해당 주의 목요일 기준으로 월 결정
+  const weekThu = new Date(weekMon);
+  weekThu.setUTCDate(weekMon.getUTCDate() + 3);
+  const month = weekThu.getUTCMonth() + 1;
+  const monthYear = weekThu.getUTCFullYear();
+  // 이 달의 1일을 포함하는 주의 월요일 → 1주차 기준
+  const firstOfMonth = new Date(Date.UTC(monthYear, month - 1, 1));
+  const fdow = firstOfMonth.getUTCDay() || 7;
+  const firstMon = new Date(firstOfMonth);
+  firstMon.setUTCDate(1 - fdow + 1);
+  const weekOfMonth = Math.round((weekMon - firstMon) / (7 * 864e5)) + 1;
+  return `${monthYear}년 ${month}월 ${weekOfMonth}주차`;
+}
+
 // ── Archive Panel ─────────────────────────────────────────────────────────────
 async function loadArchive() {
   const panel = document.getElementById('archivePanel');
@@ -795,7 +819,7 @@ async function loadArchive() {
         <div class="archive-grid">
           ${summaries.map(s => `
             <div class="archive-card">
-              <div class="archive-card-week">${s.year}-${s.week}</div>
+              <div class="archive-card-week">${isoWeekToKorean(s.year, s.week)}</div>
               <div class="archive-card-period">${s.start} ~ ${s.end}</div>
               <div class="archive-card-stats">
                 <span class="archive-stat">📰 ${s.articles}건</span>
