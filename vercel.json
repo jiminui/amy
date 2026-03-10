@@ -1,6 +1,6 @@
-{
-  "rewrites": [
-    { "source": "/dashboard_ver.1", "destination": "/dashboard_ver2.html" },
-    { "source": "/dashboard_ver.1/", "destination": "/dashboard_ver2.html" }
-  ]
-}
+ {
+    "rewrites": [
+      { "source": "/news", "destination": "/dashboard_ver2.html" },
+      { "source": "/news/", "destination": "/dashboard_ver2.html" }
+    ]
+  }
