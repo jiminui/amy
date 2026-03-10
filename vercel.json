@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/news", "destination": "/대시보드.html" },
-    { "source": "/news/", "destination": "/대시보드.html" }
+    { "source": "/dashboard_ver.1", "destination": "/dashboard_ver2.html" },
+    { "source": "/dashboard_ver.1/", "destination": "/dashboard_ver2.html" }
   ]
 }
