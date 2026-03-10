@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>위클리 뉴스 클리핑 대시보드</title>
+  <link rel="stylesheet" as="style" crossorigin
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-primary:        #1B3BFF;
+      --color-primary-dark:   #1230CC;
+      --color-primary-light:  #4D68FF;
+      --color-primary-bg:     #EEF1FF;
+      --color-bg:             #F7F8FA;
+      --color-surface:        #FFFFFF;
+      --color-border:         #E8EAED;
+      --color-text-primary:   #191F28;
+      --color-text-secondary: #4E5968;
+      --color-text-tertiary:  #8B95A1;
+      --color-positive:       #0ABF76;
+      --color-negative:       #F04452;
+      --color-warning:        #FF9500;
+    }
+
+    body {
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header ── */
+    .header {
+      border-bottom: 1px solid var(--color-border);
+      padding: 18px 32px;
+      position: sticky;
+      top: 0;
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+    .header-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .header-left { display: flex; flex-direction: column; gap: 4px; }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-badge {
+      background: var(--color-primary);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .header-left h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--color-text-primary);
+    }
+    .header-meta {
+      font-size: 13px;
+      color: var(--color-text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-refresh {
+      font-family: 'Pretendard', sans-serif;
+      font-size: 13px;
+      color: var(--color-text-tertiary);
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: color 0.15s;
+      padding: 0;
+    }
+    .btn-refresh:hover { color: var(--color-primary); }
+    .btn-refresh.spinning { animation: spin 0.7s linear infinite; display: inline-block; }
+
+    /* ── Search ── */
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      max-width: 320px;
+      min-width: 160px;
+    }
+    .search-wrap input {
+      width: 100%;
+      font-family: 'Pretendard', sans-serif;
+      font-size: 14px;
+      padding: 10px 36px 10px 38px;
+      border: 1.5px solid var(--color-border);
+      border-radius: 10px;
+      background: var(--color-bg);
+      outline: none;
+      transition: all 0.15s;
+      color: var(--color-text-primary);
+    }
+    .search-wrap input:focus {
+      border-color: var(--color-primary);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(27,59,255,0.08);
+    }
+    .search-wrap input::placeholder { color: var(--color-text-tertiary); }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; color: var(--color-text-tertiary); pointer-events: none; }
+    .search-clear { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--color-text-tertiary); cursor: pointer; background: none; border: none; display: none; padding: 4px; }
+    .search-clear:hover { color: var(--color-text-primary); }
+
+    /* ── Main ── */
+    .main { max-width: 1280px; margin: 0 auto; padding: 32px 24px 100px; }
+
+    /* ── Section ── */
+    .section { margin-bottom: 40px; }
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background: var(--color-primary);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tab {
+      font-family: 'Pretendard', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 14px;
+      border: 1.5px solid var(--color-border);
+      border-radius: 100px;
+      background: var(--color-surface);
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .tab:hover { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-primary-bg); }
+    .tab.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); font-weight: 600; }
+
+    /* ── News Grid & Cards ── */
+    .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+    .news-card {
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--color-surface);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 0 1px rgba(0,0,0,0.08);
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .news-card:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.10), 0 0 1px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+    }
+    .news-card a { text-decoration: none; color: inherit; display: block; }
+    .news-card-img { width: 100%; height: 150px; object-fit: cover; background: var(--color-primary-bg); display: block; }
+    .news-card-body { padding: 16px 18px; }
+    .news-card-source { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--color-primary); margin-bottom: 6px; }
+    .news-card-title { font-size: 15px; font-weight: 600; line-height: 1.45; color: var(--color-text-primary); margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .news-card-desc { font-size: 13px; color: var(--color-text-secondary); line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 10px; }
+    .news-card-time { font-size: 12px; color: var(--color-text-tertiary); }
+
+    /* ── Bullet (주요 뉴스) ── */
+    .bullet-section {
+      background: var(--color-surface);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 0 1px rgba(0,0,0,0.08);
+    }
+    .bullet-section-header {
+      padding: 14px 20px;
+      background: var(--color-primary-bg);
+      color: var(--color-primary);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .bullet-list { padding: 4px 0; }
+    .bullet-item {
+      display: flex;
+      gap: 14px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--color-bg);
+      align-items: flex-start;
+      transition: background 0.12s;
+    }
+    .bullet-item:last-child { border-bottom: none; }
+    .bullet-item:hover { background: #FAFBFF; }
+    .bullet-rank {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--color-primary);
+      border-radius: 6px;
+      min-width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .bullet-content { flex: 1; min-width: 0; }
+    .bullet-meta {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+      margin-bottom: 5px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .bullet-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      line-height: 1.45;
+      text-decoration: none;
+      display: block;
+      margin-bottom: 5px;
+    }
+    .bullet-title:hover { color: var(--color-primary); }
+    .bullet-desc { font-size: 13px; color: var(--color-text-secondary); line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    /* Source toggle */
+    .btn-coverage {
+      font-family: 'Pretendard', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-primary);
+      background: var(--color-primary-bg);
+      border: none;
+      border-radius: 6px;
+      padding: 3px 10px;
+      cursor: pointer;
+      margin-top: 8px;
+      display: inline-block;
+      transition: background 0.12s;
+    }
+    .btn-coverage:hover { background: #D6DCFF; }
+    .source-list { display: none; margin-top: 8px; border: 1px solid var(--color-border); border-radius: 10px; overflow: hidden; background: var(--color-surface); }
+    .source-list.open { display: block; }
+    .source-link { display: flex; align-items: center; gap: 10px; padding: 10px 14px; font-size: 13px; color: var(--color-text-primary); text-decoration: none; border-bottom: 1px solid var(--color-bg); transition: background 0.12s; }
+    .source-link:last-child { border-bottom: none; }
+    .source-link:hover { background: var(--color-primary-bg); color: var(--color-primary); }
+    .source-link-name { font-weight: 600; font-size: 12px; color: var(--color-text-tertiary); flex-shrink: 0; min-width: 80px; }
+    .source-link-title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .source-link-arrow { color: var(--color-text-tertiary); font-size: 13px; flex-shrink: 0; }
+
+    /* ── Importance Tags ── */
+    .importance-tag {
+      display: inline-flex;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 100px;
+      letter-spacing: 0.01em;
+    }
+    .importance-finance  { background: #E6F9F2; color: #0ABF76; }
+    .importance-legal    { background: #FFF0EC; color: #E5451F; }
+    .importance-business { background: var(--color-primary-bg); color: var(--color-primary); }
+
+    /* ── States ── */
+    .state-box { text-align: center; padding: 48px 16px; color: var(--color-text-tertiary); }
+    .state-box .icon { font-size: 32px; margin-bottom: 12px; }
+    .state-box p { font-size: 14px; }
+    .spinner { width: 28px; height: 28px; border: 2.5px solid var(--color-border); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 12px; }
+
+    /* ── Search Results ── */
+    .search-results { display: none; }
+    .search-results.visible { display: block; }
+    .search-results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .search-results-header h2 { font-size: 18px; font-weight: 700; }
+    .search-query { color: var(--color-primary); }
+    .btn-close-search {
+      font-family: 'Pretendard', sans-serif;
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      background: none;
+      border: 1.5px solid var(--color-border);
+      border-radius: 8px;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 500;
+    }
+    .btn-close-search:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .search-subsection { margin-bottom: 32px; }
+    .search-subsection-title { font-size: 15px; font-weight: 700; color: var(--color-text-secondary); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border); }
+    .search-no-result { font-size: 14px; color: var(--color-text-tertiary); padding: 16px 0; }
+
+    /* ── Archive Panel ── */
+    .archive-panel {
+      margin-top: 48px;
+      padding-top: 32px;
+      border-top: 1px solid var(--color-border);
+    }
+    .archive-panel-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .archive-panel-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background: var(--color-primary);
+      border-radius: 2px;
+    }
+    .archive-count { font-weight: 400; font-size: 14px; color: var(--color-text-tertiary); }
+    .archive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .archive-card {
+      background: var(--color-surface);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 0 1px rgba(0,0,0,0.08);
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .archive-card:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.10), 0 0 1px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+    }
+    .archive-card-week { font-size: 13px; font-weight: 700; color: var(--color-primary); margin-bottom: 4px; }
+    .archive-card-period { font-size: 13px; color: var(--color-text-tertiary); margin-bottom: 10px; }
+    .archive-card-stats { display: flex; gap: 8px; margin-bottom: 10px; }
+    .archive-stat {
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 100px;
+      padding: 2px 10px;
+      color: var(--color-text-secondary);
+    }
+    .archive-highlights { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
+    .archive-highlights li { list-style: none; padding-left: 14px; position: relative; }
+    .archive-highlights li::before { content: '·'; position: absolute; left: 0; color: var(--color-text-tertiary); }
+    .archive-card-footer { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-border); }
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Pretendard', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-primary);
+      background: var(--color-primary-bg);
+      border: none;
+      border-radius: 8px;
+      padding: 6px 14px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.12s;
+    }
+    .btn-download:hover { background: #D6DCFF; }
+
+    /* ── Animations ── */
+    .fade-in { opacity: 0; transform: translateY(8px); animation: fadeUp 0.35s ease forwards; }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Watermark ── */
+    .watermark {
+      position: fixed;
+      bottom: 20px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      z-index: 100;
+      pointer-events: none;
+    }
+    .watermark-company {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      letter-spacing: 0.02em;
+    }
+    .watermark-confidential {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--color-text-tertiary);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .header { padding: 16px 20px; }
+      .main { padding: 20px 16px 100px; }
+      .header-inner { flex-direction: column; align-items: flex-start; }
+      .search-wrap { max-width: 100%; }
+      .news-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="header-brand">
+        <span class="brand-badge">DUNAMU</span>
+        <h1>위클리 뉴스 클리핑</h1>
+      </div>
+      <div class="header-meta">
+        <span id="headerDate"></span>
+        <button class="btn-refresh" id="btnRefresh" title="새로고침">↻ 새로고침</button>
+      </div>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="뉴스 검색 후 Enter..." />
+      <button class="search-clear" id="searchClear">✕</button>
+    </div>
+  </div>
+</header>
+
+<!-- App -->
+<div class="main" id="app"></div>
+
+<!-- 워터마크 -->
+<div class="watermark">
+  <span class="watermark-company">DUNAMU 경영혁신실</span>
+  <span class="watermark-confidential">Confidential</span>
+</div>
+
+<script>
+// ── Categories ────────────────────────────────────────────────────────────────
+const CATEGORIES = [
+  {
+    id: 'domestic',
+    title: '1. 국내 가상자산 시장',
+    tabs: [
+      { id: 'regulation',  label: '규제',   keywords: '가상자산 규제',            lang: 'ko' },
+      { id: 'market',      label: '시장',   keywords: '암호화폐 시장',            lang: 'ko' },
+      { id: 'competitors', label: '경쟁사', keywords: '빗썸 코빗 고팍스 코인원 거래소', lang: 'ko' },
+      { id: 'dunamu',      label: '두나무', keywords: '두나무 업비트',            lang: 'ko' },
+    ]
+  },
+  {
+    id: 'global',
+    title: '2. 글로벌 거래소',
+    tabs: [
+      { id: 'coinbase', label: 'Coinbase',        keywords: '코인베이스 Coinbase', lang: 'ko' },
+      { id: 'binance',  label: 'Binance',         keywords: '바이낸스 Binance',   lang: 'ko' },
+      { id: 'okx',      label: 'OKX',             keywords: 'OKX 거래소',         lang: 'ko' },
+      { id: 'kraken',   label: 'Kraken',          keywords: '크라켄 Kraken',      lang: 'ko' },
+      { id: 'bybit',    label: 'Bybit',           keywords: '바이비트 Bybit',     lang: 'ko' },
+    ]
+  },
+  {
+    id: 'trends',
+    title: '3. 트렌드 F/U',
+    tabs: [
+      { id: 'payment',    label: '결제',   keywords: 'x402 스테이블코인 결제 온체인 결제 크립토 페이먼트 USDC 결제 크로스보더 결제', lang: 'ko' },
+      { id: 'dex',        label: 'DEX',    keywords: 'Hyperliquid Uniswap PancakeSwap Perp DEX dYdX GMX 탈중앙화 거래소 온체인 파생상품', lang: 'ko' },
+      { id: 'prediction', label: '예측시장', keywords: '예측시장 폴리마켓 Polymarket Kalshi prediction market 예측시장 규제', lang: 'ko' },
+      { id: 'ai',         label: 'AI',     keywords: 'Claude Anthropic ChatGPT OpenAI Gemini GPT-5 AI 에이전트 LLM AI 신기능 Perplexity', lang: 'ko' },
+      { id: 'fintech',    label: '핀테크', keywords: '카카오페이 토스 네이버페이 Robinhood Stripe Revolut Klarna 핀테크 임베디드 파이낸스', lang: 'ko' },
+    ]
+  }
+];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const activeTab = {};
+const cache = {};
+const CACHE_TTL = 10 * 60 * 1000;
+const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const WORKER_PROXY = 'https://cors-proxy.jiminyu6577.workers.dev';
+let isSearchMode = false;
+let _gid = 0;
+const nextGid = () => `g-${++_gid}`;
+
+// ── Date Helpers ──────────────────────────────────────────────────────────────
+function formatKoreanDateTime() {
+  const now = new Date();
+  const days = ['일','월','화','수','목','금','토'];
+  return `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 (${days[now.getDay()]}) ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+}
+
+function relativeTime(dateStr) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1)  return '방금 전';
+  if (mins < 60) return `${mins}분 전`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24)  return `${hrs}시간 전`;
+  return `${Math.floor(hrs / 24)}일 전`;
+}
+
+function isWithinWeek(dateStr) {
+  return (Date.now() - new Date(dateStr).getTime()) <= ONE_WEEK_MS;
+}
+
+// ── Tier & Scoring ────────────────────────────────────────────────────────────
+const TIER1 = ['조선일보','중앙일보','동아일보','한국경제','매일경제','서울경제','이데일리','머니투데이','파이낸셜뉴스','한국금융신문','코인데스크코리아','블록미디어','디센터','토큰포스트','reuters','bloomberg','wsj','financial times','ft','coindesk','the block','decrypt','cointelegraph'];
+const TIER2 = ['4pillars','tiger research','xangle','messari','delphi digital','a16z'];
+
+function getScore(article) {
+  const src = (article.source?.name || '').toLowerCase();
+  let score = 0;
+  const ageDays = (Date.now() - new Date(article.publishedAt).getTime()) / 86400000;
+  score += Math.max(0, 7 - ageDays);
+  if (TIER1.some(s => src.includes(s)))      score += 30;
+  else if (TIER2.some(s => src.includes(s))) score += 20;
+  else                                        score += 10;
+  return score;
+}
+
+// ── Importance ────────────────────────────────────────────────────────────────
+const IMPORTANCE_RULES = {
+  finance:  ['상장','ipo','기업공개','투자 유치','투자유치','펀딩','어닝','실적','매출','영업이익','순이익','흑자전환','적자','밸류에이션','기업가치','자금조달','나스닥','earnings','revenue','profit','funding','valuation'],
+  legal:    ['규제','제재','소송','기소','법안','라이선스','vasp','금융위','sec','doj','영업정지','과태료','벌금','입법','수사','합의','형사','금감원','당국','처벌','위반','regulation','lawsuit','penalty','enforcement','ban','compliance'],
+  business: ['런칭','출시','신규 서비스','신기능','파트너십','합병','인수','m&a','협업','신사업','베타','제휴','계약 체결','사업 확장','진출','업데이트','기능 추가','launch','partnership','acquisition','new feature','expansion'],
+};
+
+function classifyImportance(article) {
+  const text = `${article.title||''} ${article.description||''}`.toLowerCase();
+  for (const [type, kws] of Object.entries(IMPORTANCE_RULES)) {
+    if (kws.some(k => text.includes(k))) return type;
+  }
+  return null;
+}
+
+// ── Fetch ─────────────────────────────────────────────────────────────────────
+async function fetchViaProxy(url) {
+  const proxies = [
+    (u) => `${WORKER_PROXY}/?url=${encodeURIComponent(u)}`,
+    (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    (u) => `https://corsproxy.org/?url=${encodeURIComponent(u)}`,
+  ];
+  for (const makeProxy of proxies) {
+    try {
+      const res = await fetch(makeProxy(url), { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) continue;
+      const text = await res.text();
+      if (text.includes('<item>')) return text;
+    } catch {}
+  }
+  throw new Error('All proxies failed');
+}
+
+async function fetchGoogleNews(keywords, lang = 'ko') {
+  try {
+    const params = lang === 'ko' ? 'hl=ko&gl=KR&ceid=KR:ko' : 'hl=en&gl=US&ceid=US:en';
+    const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(keywords)}&${params}`;
+    const text = await fetchViaProxy(rssUrl);
+    const itemBlocks = text.split('<item>').slice(1);
+    const articles = [];
+    for (let i = 0; i < Math.min(itemBlocks.length, 12); i++) {
+      const block = itemBlocks[i];
+      const getTag = (tag) => { const m = block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`)); return m ? m[1].trim() : ''; };
+      const rawTitle = getTag('title');
+      const link     = getTag('link');
+      const pubDate  = getTag('pubDate');
+      const rawDesc  = getTag('description');
+      const sourceTag = getTag('source');
+      const titleParts = rawTitle.split(' - ');
+      const sourceName = titleParts.length > 1 ? titleParts.pop().trim() : '';
+      const title = titleParts.join(' - ').trim();
+      const desc = rawDesc.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').trim();
+      if (!title) continue;
+      articles.push({
+        source: { name: sourceTag || sourceName || 'News' },
+        title,
+        description: desc.slice(0, 250),
+        url: link,
+        urlToImage: '',
+        publishedAt: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
+      });
+    }
+    return articles;
+  } catch (e) {
+    console.warn('RSS fetch failed:', e);
+    return [];
+  }
+}
+
+async function fetchArticles(catId, tab) {
+  const key = `${catId}:${tab.id}`;
+  const cached = cache[key];
+  if (cached && (Date.now() - cached.ts) < CACHE_TTL) return cached.articles;
+
+  let articles = await fetchGoogleNews(tab.keywords, tab.lang);
+
+  // 국내 카테고리: 명백히 해외 주어 기사 제거
+  if (catId === 'domestic') {
+    const FOREIGN = ['파키스탄','인도네시아','베트남','태국','말레이시아','필리핀','나이지리아','브라질','아르헨티나','멕시코','터키','이란','러시아'];
+    articles = articles.filter(a => !FOREIGN.some(c => (a.title||'').includes(c)));
+  }
+
+  // 7일 이내 필터 + 중요도 정렬
+  articles = articles.filter(a => isWithinWeek(a.publishedAt));
+  articles.sort((a, b) => getScore(b) - getScore(a));
+
+  cache[key] = { articles, ts: Date.now() };
+  return articles;
+}
+
+// ── Grouping ──────────────────────────────────────────────────────────────────
+function tokenize(text) { return text.toLowerCase().replace(/[^\w\s가-힣]/g,' ').split(/\s+/).filter(w => w.length > 2); }
+function similarity(a, b) {
+  const ta = new Set(tokenize(a)), tb = new Set(tokenize(b));
+  if (!ta.size || !tb.size) return 0;
+  let inter = 0; ta.forEach(w => { if (tb.has(w)) inter++; });
+  return inter / Math.min(ta.size, tb.size);
+}
+
+function groupArticles(articles) {
+  const groups = [], used = new Set();
+  for (let i = 0; i < articles.length; i++) {
+    if (used.has(i)) continue;
+    const group = { main: articles[i], others: [] };
+    for (let j = i+1; j < articles.length; j++) {
+      if (used.has(j)) continue;
+      if (similarity(articles[i].title, articles[j].title) > 0.4) { group.others.push(articles[j]); used.add(j); }
+    }
+    used.add(i);
+    group.importanceType = classifyImportance(articles[i]);
+    groups.push(group);
+  }
+  return groups;
+}
+
+// ── Render Helpers ────────────────────────────────────────────────────────────
+function esc(str) { const d = document.createElement('div'); d.textContent = str||''; return d.innerHTML; }
+function escAttr(str) { return (str||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+const TYPE_INFO = {
+  finance:  { label: '💰 재무',      cls: 'importance-finance'  },
+  legal:    { label: '⚖️ 규제·법무', cls: 'importance-legal'    },
+  business: { label: '🚀 사업',      cls: 'importance-business' },
+};
+
+function typeTag(t) {
+  const info = TYPE_INFO[t];
+  return info ? `<span class="importance-tag ${info.cls}">${info.label}</span>` : '';
+}
+
+function sourceLinks(articles) {
+  return articles.map(a => `
+    <a class="source-link" href="${escAttr(a.url)}" target="_blank" rel="noopener">
+      <span class="source-link-name">${esc(a.source?.name||'')}</span>
+      <span class="source-link-title">${esc(a.title||'')}</span>
+      <span class="source-link-arrow">↗</span>
+    </a>`).join('');
+}
+
+function toggleSources(id) { document.getElementById(id)?.classList.toggle('open'); }
+
+function renderCard(article, i) {
+  const img = article.urlToImage
+    ? `<img class="news-card-img" src="${escAttr(article.urlToImage)}" alt="" onerror="this.style.display='none'" />`
+    : '';
+  return `
+    <div class="news-card fade-in" style="animation-delay:${i*0.05}s">
+      <a href="${escAttr(article.url)}" target="_blank" rel="noopener">
+        ${img}
+        <div class="news-card-body">
+          <div class="news-card-source">${esc(article.source?.name||'')}</div>
+          <div class="news-card-title">${esc(article.title||'')}</div>
+          <div class="news-card-desc">${esc(article.description||'')}</div>
+          <div class="news-card-time">${relativeTime(article.publishedAt)}</div>
+        </div>
+      </a>
+    </div>`;
+}
+
+function renderBullet(group, i) {
+  const a = group.main, others = group.others || [];
+  const all = [a, ...others];
+  const gid = nextGid();
+  const coverageBtn = others.length > 0 ? `
+    <button class="btn-coverage" onclick="toggleSources('${gid}')">${all.length}개 매체 ▾</button>
+    <div class="source-list" id="${gid}">${sourceLinks(all)}</div>` : '';
+  return `
+    <div class="bullet-item fade-in" style="animation-delay:${i*0.06}s">
+      <div class="bullet-rank">${i+1}</div>
+      <div class="bullet-content">
+        <div class="bullet-meta">
+          ${typeTag(group.importanceType)}
+          <span>${esc(a.source?.name||'')}</span>
+          <span>${relativeTime(a.publishedAt)}</span>
+        </div>
+        <a class="bullet-title" href="${escAttr(a.url)}" target="_blank" rel="noopener">${esc(a.title||'')}</a>
+        <div class="bullet-desc">${esc(a.description||'')}</div>
+        ${coverageBtn}
+      </div>
+    </div>`;
+}
+
+function renderLoading() { return `<div class="state-box"><div class="spinner"></div><p>불러오는 중...</p></div>`; }
+function renderEmpty()   { return `<div class="state-box"><div class="icon">📭</div><p>이번 주(7일 이내) 기사가 없습니다.</p></div>`; }
+
+// ── App Render ────────────────────────────────────────────────────────────────
+function renderApp() {
+  const app = document.getElementById('app');
+  app.innerHTML = CATEGORIES.map(cat => {
+    const firstTab = activeTab[cat.id] || cat.tabs[0].id;
+    activeTab[cat.id] = firstTab;
+    const tabsHtml = cat.tabs.map(t =>
+      `<button class="tab ${t.id===firstTab?'active':''}" data-cat="${cat.id}" data-tab="${t.id}">${esc(t.label)}</button>`
+    ).join('');
+    return `
+      <div class="section" id="section-${cat.id}">
+        <div class="section-title">${esc(cat.title)}</div>
+        <div class="tabs" id="tabs-${cat.id}">${tabsHtml}</div>
+        <div id="grid-${cat.id}">${renderLoading()}</div>
+      </div>`;
+  }).join('') + `<div id="archivePanel"></div>`;
+
+  CATEGORIES.forEach(cat => loadTab(cat.id, activeTab[cat.id]));
+  loadArchive();
+}
+
+async function loadTab(catId, tabId) {
+  const grid = document.getElementById(`grid-${catId}`);
+  if (!grid) return;
+  grid.innerHTML = renderLoading();
+
+  const cat = CATEGORIES.find(c => c.id === catId);
+  const tab = cat.tabs.find(t => t.id === tabId);
+  const articles = await fetchArticles(catId, tab);
+  const groups = groupArticles(articles);
+
+  if (!groups.length) { grid.innerHTML = renderEmpty(); return; }
+
+  const important = groups.filter(g => g.importanceType !== null);
+  const regular   = groups.filter(g => g.importanceType === null);
+  let html = '';
+  if (important.length > 0) {
+    html += `<div class="bullet-section">
+      <div class="bullet-section-header">⚡ 주요 뉴스</div>
+      <div class="bullet-list">${important.map((g,i) => renderBullet(g,i)).join('')}</div>
+    </div>`;
+  }
+  if (regular.length > 0) {
+    html += `<div class="news-grid">${regular.map((g,i) => renderCard(g.main, i)).join('')}</div>`;
+  }
+  grid.innerHTML = html || renderEmpty();
+}
+
+// ── Archive Panel ─────────────────────────────────────────────────────────────
+async function loadArchive() {
+  const panel = document.getElementById('archivePanel');
+  if (!panel) return;
+  try {
+    const res = await fetch('archive-index.json?t=' + Date.now());
+    const data = await res.json();
+    const summaries = (data.summaries || []).slice().reverse();
+    if (!summaries.length) return;
+
+    panel.innerHTML = `
+      <div class="archive-panel">
+        <div class="archive-panel-title">주간 요약 아카이브 <span class="archive-count">${summaries.length}주</span></div>
+        <div class="archive-grid">
+          ${summaries.map(s => `
+            <div class="archive-card">
+              <div class="archive-card-week">${s.year}-${s.week}</div>
+              <div class="archive-card-period">${s.start} ~ ${s.end}</div>
+              <div class="archive-card-stats">
+                <span class="archive-stat">📰 ${s.articles}건</span>
+                <span class="archive-stat">⚡ ${s.major}건</span>
+              </div>
+              <ul class="archive-highlights">
+                ${(s.highlights||[]).map(h => `<li>${esc(h)}</li>`).join('')}
+              </ul>
+              <div class="archive-card-footer">
+                <a class="btn-download"
+                   href="${encodeURI(s.path)}"
+                   download="${esc(s.path.split('/').pop())}">
+                  ↓ MD 다운로드
+                </a>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  } catch(e) { /* archive-index.json 없으면 패널 숨김 */ }
+}
+
+// ── Tab Click ─────────────────────────────────────────────────────────────────
+document.getElementById('app').addEventListener('click', e => {
+  const btn = e.target.closest('.tab[data-cat]');
+  if (!btn) return;
+  const catId = btn.dataset.cat, tabId = btn.dataset.tab;
+  if (activeTab[catId] === tabId) return;
+  document.querySelectorAll(`.tab[data-cat="${catId}"]`).forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeTab[catId] = tabId;
+  loadTab(catId, tabId);
+});
+
+// ── Refresh ───────────────────────────────────────────────────────────────────
+document.getElementById('btnRefresh').addEventListener('click', () => {
+  Object.keys(cache).forEach(k => delete cache[k]);
+  document.getElementById('headerDate').textContent = formatKoreanDateTime();
+  isSearchMode = false;
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchClear').style.display = 'none';
+  renderApp();
+});
+
+// ── Search ────────────────────────────────────────────────────────────────────
+function getAllCached() {
+  const all = [], seen = new Set();
+  Object.values(cache).forEach(({articles}) => (articles||[]).forEach(a => {
+    if (!seen.has(a.url)) { seen.add(a.url); all.push(a); }
+  }));
+  return all;
+}
+
+async function performSearch(query) {
+  isSearchMode = true;
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="search-results visible">
+      <div class="search-results-header">
+        <h2>"<span class="search-query">${esc(query)}</span>" 검색 결과</h2>
+        <button class="btn-close-search" id="btnCloseSearch">✕ 닫기</button>
+      </div>
+      <div class="search-subsection">
+        <div class="search-subsection-title">📋 클리핑된 뉴스</div>
+        <div class="news-grid" id="grid-cached">${renderLoading()}</div>
+      </div>
+      <div class="search-subsection">
+        <div class="search-subsection-title">🌐 웹 검색</div>
+        <div class="news-grid" id="grid-web">${renderLoading()}</div>
+      </div>
+    </div>`;
+  document.getElementById('btnCloseSearch').addEventListener('click', closeSearch);
+
+  const q = query.toLowerCase();
+  const cached = getAllCached().filter(a =>
+    `${a.title||''} ${a.description||''} ${a.source?.name||''}`.toLowerCase().includes(q)
+  );
+  const gc = document.getElementById('grid-cached');
+  gc.innerHTML = cached.length ? cached.map((a,i) => renderCard(a,i)).join('') : `<div class="search-no-result">클리핑된 뉴스 중 일치하는 결과 없음</div>`;
+
+  const gw = document.getElementById('grid-web');
+  try {
+    const web = await fetchGoogleNews(query, 'ko');
+    gw.innerHTML = web.length ? web.map((a,i) => renderCard(a,i)).join('') : `<div class="search-no-result">웹 검색 결과 없음</div>`;
+  } catch { gw.innerHTML = `<div class="search-no-result">검색 중 오류 발생</div>`; }
+}
+
+function closeSearch() {
+  isSearchMode = false;
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchClear').style.display = 'none';
+  renderApp();
+}
+
+const searchInput = document.getElementById('searchInput');
+const searchClearBtn = document.getElementById('searchClear');
+
+searchInput.addEventListener('input', () => {
+  searchClearBtn.style.display = searchInput.value ? 'block' : 'none';
+});
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && searchInput.value.trim()) performSearch(searchInput.value.trim());
+  if (e.key === 'Escape') isSearchMode ? closeSearch() : (searchInput.value='', searchClearBtn.style.display='none', searchInput.blur());
+});
+searchClearBtn.addEventListener('click', () => {
+  isSearchMode ? closeSearch() : (searchInput.value='', searchClearBtn.style.display='none', searchInput.focus());
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.getElementById('headerDate').textContent = formatKoreanDateTime();
+renderApp();
+</script>
+</body>
+</html>
